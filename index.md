@@ -1,4 +1,4 @@
-# PASTA - Patch Air Saves and Title Anomaly
+# Welcome
 
 This patch is meant to fix a recurring bug affecting save files visibility in [Air](https://en.wikipedia.org/wiki/Air_(video_game)).
 
