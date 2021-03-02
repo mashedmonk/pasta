@@ -1,4 +1,4 @@
-$host.ui.RawUI.WindowTitle = "PASTA - Patch Air Saves and Title Anomaly"
+$host.ui.RawUI.WindowTitle = "PASTA - Patch Air Saves and Title Anomaly (v1.01)"
 
 Write-Output @"
                                                                                                 888888
@@ -30,11 +30,20 @@ Write-Output @"
                                                                                             :XS    :XS
 "@
 
+$isExeCompiled = $args[0]
+$isDefaultPath = Test-Path -LiteralPath "C:\KEY\AIR_SE"
+
 # File browser
 [Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
 [System.Windows.Forms.Application]::EnableVisualStyles()
 $browse = New-Object System.Windows.Forms.FolderBrowserDialog
-$browse.SelectedPath = "C:\KEY\AIR_SE"
+# Place the file selector on default path C:\KEY\AIR_SE if it exists
+if ($isDefaultPath) {$browse.SelectedPath = "C:\KEY\AIR_SE"}
+# else place the file selector in the current script path
+# if the script is wrapped in .exe, use the variable passed from autohotkey
+elseif ($isExeCompiled){$browse.SelectedPath = "$($args[0])"}
+# else the script is directly called, use powershell variable
+else {$browse.SelectedPath = "$PSScriptRoot"}
 $browse.ShowNewFolderButton = $false
 $browse.Description = "Select a directory"
 
@@ -47,8 +56,9 @@ while($loop) {
 
 		$menu = "1 - Backup and patch`n"+
 				"2 - Restore backups and unpatch`n"+
-				"3 - About us`n"+
-				"4 - Quit`n" +
+				"3 - Set maximum number of save files detected by the game to 256 (default is 100)`n"+
+				"4 - About us`n"+
+				"5 - Quit`n" +
 				"Please make a choice"
 
 		Do { # Loop through the menu
@@ -61,18 +71,18 @@ while($loop) {
 					# Check if .bak files are present
 					# If not, check if GAMEEXE.ini and SAVEDATA folder are present
 					# If not, it is wrong path, abort
-					if ((Test-Path $path\GAMEEXE.ini.bak) -or (Test-Path $path\SAVEDATA.bak)) {
+					if ((Test-Path -LiteralPath $path\GAMEEXE.ini.bak) -or (Test-Path -LiteralPath $path\SAVEDATA.bak)) {
 						Write-Output "Already patched!"
 						Write-Output "To patch again use restore first or manually rename or remove GAMEEXE.ini.bak and SAVEDATA.bak folder."
 					}
-					elseif ((Test-Path $path\GAMEEXE.ini) -and (Test-Path $path\SAVEDATA)) {
+					elseif ((Test-Path -LiteralPath $path\GAMEEXE.ini) -and (Test-Path -LiteralPath $path\SAVEDATA)) {
 
 						# Make a backup
-						Copy-Item -Path $path\GAMEEXE.ini -Destination $path\GAMEEXE.ini.bak
+						Copy-Item -LiteralPath $path\GAMEEXE.ini -Destination $path\GAMEEXE.ini.bak
 						# Fill the title in .ini file with whitespaces
 						# 127 characters is the max length, used to prevent randomness
 						$124whitespaces = " "*124
-						(Get-Content $path\GAMEEXE.INI) -replace "#CAPTION=`"Air(.*)`"","#CAPTION=`"Air$124whitespaces`"" | Set-Content $path\GAMEEXE.ini -Encoding ASCII
+						(Get-Content -LiteralPath $path\GAMEEXE.INI) -replace "#CAPTION=`"Air(.*)`"","#CAPTION=`"Air$124whitespaces`"" | Set-Content -LiteralPath $path\GAMEEXE.ini -Encoding ASCII
 						# Encoding ASCII forces UTF7, making the file UTF8 without BOM
 						# as long as there is no unsupported character
 						# UTF8 option does make an UTF8-BOM on PowerShell (not core)
@@ -82,10 +92,10 @@ while($loop) {
 						# Hex-edit the title in each save file corresponding to the numbered slots
 						# Don't touch read.sav, REALLIVE.sav and save999.sav
 						# Make a backup
-						Copy-Item -Path $path\SAVEDATA -Destination $path\SAVEDATA.bak -Recurse
+						Copy-Item -LiteralPath $path\SAVEDATA -Destination $path\SAVEDATA.bak -Recurse
 
 						$i = 0
-						$files = Get-ChildItem -Path $path\SAVEDATA | Where-Object Name -like save*.sav | Where-Object Name -ne save999.sav
+						$files = Get-ChildItem -LiteralPath $path\SAVEDATA | Where-Object Name -like save*.sav | Where-Object Name -ne save999.sav
 						$files | ForEach-Object {
 
 							# Position of the title
@@ -115,35 +125,44 @@ while($loop) {
 				}
 				2 { # Restore
 
-					if ((Test-Path $path\GAMEEXE.ini.bak)) {
-						Remove-Item -Path $path\GAMEEXE.ini -ErrorAction Ignore
-						Move-Item -Path $path\GAMEEXE.ini.bak -Destination $path\GAMEEXE.ini
+					if ((Test-Path -LiteralPath $path\GAMEEXE.ini.bak)) {
+						Remove-Item -LiteralPath $path\GAMEEXE.ini -ErrorAction Ignore
+						Move-Item -LiteralPath $path\GAMEEXE.ini.bak -Destination $path\GAMEEXE.ini
 						Write-Output "GAMEEXE.ini has been restored."
 					}
 					else {
 						Write-Output "No GAMEEXE.ini.bak file backup present."
 					}
-					if (Test-Path $path\SAVEDATA.bak) {
-						Remove-Item -Path $path\SAVEDATA -Recurse -ErrorAction Ignore
-						Move-Item -Path $path\SAVEDATA.bak -Destination $path\SAVEDATA
+					if (Test-Path -LiteralPath $path\SAVEDATA.bak) {
+						Remove-Item -LiteralPath $path\SAVEDATA -Recurse -ErrorAction Ignore
+						Move-Item -LiteralPath $path\SAVEDATA.bak -Destination $path\SAVEDATA
 						Write-Output "SAVEDATA folder has been restored."
 					}
 					else {
 						Write-Output "No SAVEDATA.bak folder backup present."
 					}
 				}
-				3 {
+				3 { # Set maximum number of save files detected by the game to 256 (default is 100)
+					if (Test-Path -LiteralPath $path\GAMEEXE.ini) {
+						(Get-Content -LiteralPath $path\GAMEEXE.INI) -replace "#SAVE_CNT=100","#SAVE_CNT=256" | Set-Content -LiteralPath $path\GAMEEXE.ini -Encoding ASCII
+						Write-Output "Maximum number of save files detected by the game set to 256"
+					}
+					else {
+						Write-Output "GAMEEXE.ini is missing, aborting."
+					}
+				}
+				4 {
 					Write-Output "Script made by @mashedmonk with help from @Sep7em"
 					Write-Output "GitHub: https://github.com/mashedmonk/pasta"
 					Write-Output "Please be free to come talk about the game or series at https://discord.gg/N8wTXEK"
 					# Credits to https://code.adonline.id.au/folder-file-browser-dialogues-powershell/ for the folder selector
 				}
-				4 {} # Do nothing and quit
+				5 {} # Do nothing and quit
 				Default {} # Do nothing and reload the menu
 			}
 
 			Write-Output ""
-		} While ($choice -notin 4)
+		} While ($choice -notin 5)
 
 	}
 	else {
