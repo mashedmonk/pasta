@@ -14,11 +14,13 @@ Its main purpose is to fix the save files that are no longer visible ingame, alt
 
 ## How to run the patch?
 
-Easier methods are listed first:
+Download the `.exe` on the [releases page](https://github.com/mashedmonk/pasta/releases/)
 
-- Download the `.exe` on the [releases page](https://github.com/mashedmonk/pasta/releases/)
+There *might* be a false positive triggered by your antivirus software.
+If so, you can try **one** of the methods below:
+
 - Download the `.ps1` script and `clickme` shortcut. Put them in the same folder and launch `clickme`
-- Download only the `.ps1` script and run it in PowerShell console. You need to set first your security settings to allow execution: launch PowerShell console in administrator mode and run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned`
+- Download only the `.ps1` script and run it in a PowerShell console. You need to first set your security settings to allow execution. To do so, launch a PowerShell console in administrator mode and run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned`
 
 ## When and where the save bug happens?
 
