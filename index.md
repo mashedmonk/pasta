@@ -27,7 +27,7 @@ If so, you can try **one** of the methods below:
 When those factors come together:
 
 - Gao Gao translation is used; Not sure if Winter Confetti is impacted
-- Game is run on Windows 10
+- Game is run on Windows 10 or newer
 - Some time passes
 - Or save files are restored on a different computer
 
